@@ -1,0 +1,2 @@
+defmodule CpuScheduler do
+end
