@@ -22,7 +22,8 @@ be found at [https://hexdocs.pm/cpuscheduler](https://hexdocs.pm/cpu__scheduler)
 ## Algorithms
 
 - FCFS
-  - Processes are executed in the order they are brought in, regardless of the time in which they are queued in.
+  - Processes are executed in the order they are brought in, regardless of the 
+  time in which they are queued in.
   - P1 -> P2 -> P3 :: |P1|P2|P3|
   - Waiting time for Pn = Process time of (Pn-1 + Pn-2 + ... + P1)
   - Turnaround time for Pn = Waiting time of Pn + Process time of Pn 
@@ -49,3 +50,16 @@ be found at [https://hexdocs.pm/cpuscheduler](https://hexdocs.pm/cpu__scheduler)
 ```
 
 ## SJF API
+
+## Raison D'etre
+
+- Elixir is a language that I am pretty confident with by now, but the Phoenix 
+framework not as much, so this is an opportunity to learn and work more with 
+that.
+- I wanted to try out using Dave Thomas' "Component-based Design/Architecture" 
+idea.
+- I wanted an opportunity to try out TDD on something more complex then a toy 
+problem/kata.
+- I've been looking for an excuse to try the Elm programming language since 
+going through the tutorial some time ago, but I have never needed to build a 
+front-end for an application before.
