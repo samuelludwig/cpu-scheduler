@@ -15,21 +15,109 @@ defmodule Fcfs do
   }
   """
 
-  def calculate(%{algorithm: :first_come_first_serve, process_burst_sizes: []} = _map) do
-    %{process_times: [], gantt_data: []}
+  def calculate_cpu_schedule_data(
+        %{algorithm: :first_come_first_serve, process_burst_sizes: []} = _map
+      ) do
+    %{process_times: [], gantt_data: [], average_wait_time: nil, average_turn_around_time: nil}
   end
 
-  def calculate(%{algorithm: :first_come_first_serve, process_burst_sizes: processes} = _map) do
-    process_times =
-      Enum.reduce(processes, [], fn {p_name, burst_size}, acc ->
-        [%{p_name: p_name, wait_time: 0, turnaround_time: burst_size}] ++ acc
-      end)
+  def calculate_cpu_schedule_data(
+        %{algorithm: :first_come_first_serve, process_burst_sizes: processes} = _map
+      ) do
+    process_times = generate_process_times_list(processes)
 
-    gantt_data =
-      Enum.reduce(processes, [], fn {p_name, burst_size}, acc ->
-        [%{p_name: p_name, time_start: 0, time_stop: burst_size}] ++ acc
-      end)
+    average_wait_time = get_average_wait_time(process_times) |> Float.round(2)
+    average_turn_around_time = get_average_turnaround_time(process_times) |> Float.round(2)
 
-    %{process_times: process_times, gantt_data: gantt_data}
+    gantt_data = generate_gantt_data_list(processes)
+
+    %{
+      process_times: process_times,
+      gantt_data: gantt_data,
+      average_wait_time: average_wait_time,
+      average_turn_around_time: average_turn_around_time
+    }
+  end
+
+  def get_wait_time_of_process(process_queue, name_of_wanted_process) do
+    position = get_index_of_process_in_queue(process_queue, name_of_wanted_process)
+
+    case position do
+      nil ->
+        nil
+
+      _ ->
+        Enum.take(process_queue, position)
+        |> Enum.reduce(0, fn {_p_name, burst_size}, acc -> acc + burst_size end)
+    end
+  end
+
+  def get_turnaround_time_of_process(process_queue, name_of_wanted_process) do
+    position = get_index_of_process_in_queue(process_queue, name_of_wanted_process)
+
+    case position do
+      nil ->
+        nil
+
+      _ ->
+        {_p_name, burst_size} = Enum.at(process_queue, position)
+        burst_size + get_wait_time_of_process(process_queue, name_of_wanted_process)
+    end
+  end
+
+  defp get_average_wait_time(process_times) do
+    Enum.reduce(process_times, 0, fn %{
+                                       p_name: _p_name,
+                                       wait_time: wait_time,
+                                       turnaround_time: _turnaround_time
+                                     },
+                                     acc ->
+      acc + wait_time
+    end)
+    |> Kernel./(Enum.count(process_times))
+  end
+
+  defp get_average_turnaround_time(process_times) do
+    Enum.reduce(process_times, 0, fn %{
+                                       p_name: _p_name,
+                                       wait_time: _wait_time,
+                                       turnaround_time: turnaround_time
+                                     },
+                                     acc ->
+      acc + turnaround_time
+    end)
+    |> Kernel./(Enum.count(process_times))
+  end
+
+  defp generate_process_times_list(process_queue) do
+    Enum.reduce(process_queue, [], fn {p_name, _burst_size}, acc ->
+      [
+        %{
+          p_name: p_name,
+          wait_time: get_wait_time_of_process(process_queue, p_name),
+          turnaround_time: get_turnaround_time_of_process(process_queue, p_name)
+        }
+      ] ++ acc
+    end)
+    |> Enum.reverse()
+  end
+
+  defp generate_gantt_data_list(process_queue) do
+    Enum.reduce(process_queue, [], fn {p_name, _burst_size}, acc ->
+      [
+        %{
+          p_name: p_name,
+          time_start: get_wait_time_of_process(process_queue, p_name),
+          time_stop: get_turnaround_time_of_process(process_queue, p_name)
+        }
+      ] ++ acc
+    end)
+    |> Enum.reverse()
+  end
+
+  defp get_index_of_process_in_queue(process_queue, name_of_wanted_process) do
+    Enum.find_index(process_queue, fn {p_name, _burst_size} ->
+      p_name == name_of_wanted_process
+    end)
   end
 end
