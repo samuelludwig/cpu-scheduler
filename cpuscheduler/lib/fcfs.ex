@@ -3,16 +3,6 @@ defmodule Fcfs do
   First-Come-First-Serve Algorithm:
   Waiting time for Pn = Process time of (Pn-1 + Pn-2 + ... + P1)
   Turnaround time for Pn = Waiting time of Pn + Process time of Pn
-
-  The data will be returned in a map in the form of:
-
-  %{process_times: [%{p_name: p1, wait_time: n, turnaround_time: m},
-  ...,
-  %{p_name: pn, wait_time: y, turnaround_time: z}],
-  gantt_data: [%{p_name: p1, time_start: n, time_stop: m},
-  ...,
-  %{p_name: pn, time_start: x, time_stop: y}]
-  }
   """
 
   def calculate_cpu_schedule_data(%SimParameters{
