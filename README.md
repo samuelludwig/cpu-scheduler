@@ -9,7 +9,7 @@ The tech stack employed will be as follows:
 - Backend: Elixir + Phoenix
 - Frontend: Elm
 
-## Raison D'etre
+## Raison D'être
 
 - Elixir is a language that I am pretty confident with by now, but the Phoenix 
 framework not as much, so this is an opportunity to learn and work more with 
