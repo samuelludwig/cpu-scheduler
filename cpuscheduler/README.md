@@ -50,16 +50,3 @@ be found at [https://hexdocs.pm/cpuscheduler](https://hexdocs.pm/cpu__scheduler)
 ```
 
 ## SJF API
-
-## Raison D'etre
-
-- Elixir is a language that I am pretty confident with by now, but the Phoenix 
-framework not as much, so this is an opportunity to learn and work more with 
-that.
-- I wanted to try out using Dave Thomas' "Component-based Design/Architecture" 
-idea.
-- I wanted an opportunity to try out TDD on something more complex then a toy 
-problem/kata.
-- I've been looking for an excuse to try the Elm programming language since 
-going through the tutorial some time ago, but I have never needed to build a 
-front-end for an application before.
