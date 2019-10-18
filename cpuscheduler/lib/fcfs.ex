@@ -4,50 +4,6 @@ defmodule Fcfs do
   Waiting time for Pn = Process time of (Pn-1 + Pn-2 + ... + P1)
   Turnaround time for Pn = Waiting time of Pn + Process time of Pn
   """
-
-  def calculate_cpu_schedule_data(%SimParameters{
-        algorithm: :first_come_first_serve,
-        processes: []
-      }) do
-    %SimOutput{
-      process_times: [],
-      gantt_data: [],
-      average_wait_time: nil,
-      average_turn_around_time: nil
-    }
-  end
-
-  def calculate_cpu_schedule_data(%SimParameters{
-        algorithm: :first_come_first_serve,
-        processes: nil
-      }) do
-    %SimOutput{
-      process_times: [],
-      gantt_data: [],
-      average_wait_time: nil,
-      average_turn_around_time: nil
-    }
-  end
-
-  def calculate_cpu_schedule_data(%SimParameters{
-        algorithm: :first_come_first_serve,
-        processes: processes
-      }) do
-    process_times = generate_process_times_list(processes)
-
-    average_wait_time = get_average_wait_time(process_times) |> Float.round(2)
-    average_turn_around_time = get_average_turnaround_time(process_times) |> Float.round(2)
-
-    gantt_data = generate_gantt_data_list(processes)
-
-    %SimOutput{
-      process_times: process_times,
-      gantt_data: gantt_data,
-      average_wait_time: average_wait_time,
-      average_turn_around_time: average_turn_around_time
-    }
-  end
-
   def get_wait_time_of_process(process_queue, name_of_wanted_process) do
     position = get_index_of_process_in_queue(process_queue, name_of_wanted_process)
 
@@ -74,7 +30,7 @@ defmodule Fcfs do
     end
   end
 
-  defp get_average_wait_time(process_times) do
+  def get_average_wait_time(process_times) do
     Enum.reduce(process_times, 0, fn %ProcessTimeDatum{
                                        p_name: _p_name,
                                        wait_time: wait_time,
@@ -86,7 +42,7 @@ defmodule Fcfs do
     |> Kernel./(Enum.count(process_times))
   end
 
-  defp get_average_turnaround_time(process_times) do
+  def get_average_turnaround_time(process_times) do
     Enum.reduce(process_times, 0, fn %ProcessTimeDatum{
                                        p_name: _p_name,
                                        wait_time: _wait_time,
@@ -98,7 +54,7 @@ defmodule Fcfs do
     |> Kernel./(Enum.count(process_times))
   end
 
-  defp generate_process_times_list(process_queue) do
+  def generate_process_times_list(process_queue) do
     Enum.reduce(process_queue, [], fn %CpuProcess{p_name: p_name}, acc ->
       [
         %ProcessTimeDatum{
@@ -111,7 +67,7 @@ defmodule Fcfs do
     |> Enum.reverse()
   end
 
-  defp generate_gantt_data_list(process_queue) do
+  def generate_gantt_data_list(process_queue) do
     Enum.reduce(process_queue, [], fn %CpuProcess{p_name: p_name}, acc ->
       [
         %GanttDatum{
@@ -124,7 +80,7 @@ defmodule Fcfs do
     |> Enum.reverse()
   end
 
-  defp get_index_of_process_in_queue(process_queue, name_of_wanted_process) do
+  def get_index_of_process_in_queue(process_queue, name_of_wanted_process) do
     Enum.find_index(process_queue, fn %CpuProcess{p_name: p_name} ->
       p_name == name_of_wanted_process
     end)

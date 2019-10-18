@@ -3,13 +3,13 @@ defmodule FcfsTest do
 
   describe "Fcfs.calculate_cpu_schedule_data/1" do
     test "fails pattern match for wrong algorithm" do
-      catch_error(Fcfs.calculate_cpu_schedule(%SimParameters{algorithm: :bad_alg, processes: []}))
+      catch_error(CpuScheduler.calculate_cpu_schedule(%SimParameters{algorithm: :bad_alg, processes: []}))
     end
 
     test "returns a map with no data when given no processes" do
       map = %SimParameters{algorithm: :first_come_first_serve, processes: []}
 
-      assert Fcfs.calculate_cpu_schedule_data(map) == %SimOutput{
+      assert CpuScheduler.calculate_cpu_schedule_data(map) == %SimOutput{
                process_times: [],
                gantt_data: [],
                average_wait_time: nil,
@@ -18,7 +18,7 @@ defmodule FcfsTest do
 
       map = %SimParameters{algorithm: :first_come_first_serve, processes: nil}
 
-      assert Fcfs.calculate_cpu_schedule_data(map) == %SimOutput{
+      assert CpuScheduler.calculate_cpu_schedule_data(map) == %SimOutput{
                process_times: [],
                gantt_data: [],
                average_wait_time: nil,
@@ -32,7 +32,7 @@ defmodule FcfsTest do
         processes: [%CpuProcess{p_name: "p1", burst_size: 6}]
       }
 
-      assert Fcfs.calculate_cpu_schedule_data(map) == %SimOutput{
+      assert CpuScheduler.calculate_cpu_schedule_data(map) == %SimOutput{
                process_times: [%ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6}],
                gantt_data: [%GanttDatum{p_name: "p1", time_start: 0, time_stop: 6}],
                average_wait_time: 0,
@@ -50,7 +50,7 @@ defmodule FcfsTest do
         ]
       }
 
-      assert Fcfs.calculate_cpu_schedule_data(map) ==
+      assert CpuScheduler.calculate_cpu_schedule_data(map) ==
                %SimOutput{
                  process_times: [
                    %ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6},
