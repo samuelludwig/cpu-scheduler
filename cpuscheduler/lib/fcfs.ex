@@ -6,6 +6,18 @@ defmodule Fcfs do
   """
   import Util
 
+  def generate_process_times_list(process_queue) do
+    Enum.map(process_queue, fn %CpuProcess{p_name: p_name} ->
+      build_process_time_datum_struct(process_queue, p_name)
+    end)
+  end
+
+  def generate_gantt_data_list(process_queue) do
+    Enum.map(process_queue, fn %CpuProcess{p_name: p_name} ->
+      build_gantt_datum_struct(process_queue, p_name)
+    end)
+  end
+
   def get_wait_time_of_process_in_queue(process_queue, process_name) do
     if process_exists_in_queue?(process_queue, process_name) do
       position = get_index_of_process_in_queue(process_queue, process_name)
@@ -17,18 +29,6 @@ defmodule Fcfs do
     if process_exists_in_queue?(process_queue, process_name) do
       add_burst_size_and_wait_time_of_process_in_queue(process_queue, process_name)
     end
-  end
-
-  def generate_process_times_list(process_queue) do
-    Enum.map(process_queue, fn %CpuProcess{p_name: p_name} ->
-      build_process_time_datum_struct(process_queue, p_name)
-    end)
-  end
-
-  def generate_gantt_data_list(process_queue) do
-    Enum.map(process_queue, fn %CpuProcess{p_name: p_name} ->
-      build_gantt_datum_struct(process_queue, p_name)
-    end)
   end
 
   defp add_burst_size_and_wait_time_of_process_in_queue(process_queue, process_name) do
