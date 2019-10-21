@@ -197,4 +197,10 @@ defmodule UtilTest do
              ) == 17
     end
   end
+
+  describe "get_total_runtime_of_all_processes_in_queue/1" do
+    test "returns sum of all burst sizes in a given queue", context do
+      assert get_total_runtime_of_all_processes_in_queue(context[:process_list]) == 17
+    end
+  end
 end

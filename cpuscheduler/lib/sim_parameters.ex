@@ -1,6 +1,6 @@
 defmodule SimParameters do
   @enforce_keys [:algorithm]
-  defstruct ~w[algorithm processes]a
+  defstruct ~w[algorithm processes quantum]a
 
   @type t() :: %__MODULE__{
           algorithm:
@@ -8,7 +8,8 @@ defmodule SimParameters do
             | :shortest_job_first
             | :round_robin
             | :priority,
-          processes: [CpuProcess.t()] | nil
+          processes: [CpuProcess.t()] | nil,
+          quantum: integer() | nil
         }
 
   def new(fields) do

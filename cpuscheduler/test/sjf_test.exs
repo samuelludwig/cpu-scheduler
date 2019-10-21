@@ -46,23 +46,6 @@ defmodule SjfTest do
     ]
   end
 
-  describe "order_process_list_by_burst_size/1" do
-    test "returns empty list when given an empty queue" do
-      assert order_process_list_by_burst_size([]) == []
-    end
-
-    test "returns unaltered list when there is only one process in the queue", context do
-      assert order_process_list_by_burst_size([context[:single_process]]) == [
-               context[:single_process]
-             ]
-    end
-
-    test "returns list of processes with burst-sizes sorted from least to greatest", context do
-      assert order_process_list_by_burst_size(context[:process_list]) ==
-               context[:sorted_process_list]
-    end
-  end
-
   describe "generate_process_times_list/1" do
     test "return single datum when only one process is given", context do
       assert generate_process_times_list([context[:single_process]]) ==

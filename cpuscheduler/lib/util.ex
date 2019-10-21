@@ -85,13 +85,19 @@ defmodule Util do
     }
   end
 
-  defp add_burst_size_and_wait_time_of_process_in_queue(process_queue, process_name) do
+  def add_burst_size_and_wait_time_of_process_in_queue(process_queue, process_name) do
     get_burst_size_of_process_in_queue(process_queue, process_name) +
       get_wait_time_of_process_in_queue(process_queue, process_name)
   end
 
-  defp add_process_burst_sizes_up_to_queue_position(process_queue, position) do
+  def add_process_burst_sizes_up_to_queue_position(process_queue, position) do
     Enum.take(process_queue, position)
     |> Enum.reduce(0, fn %CpuProcess{burst_size: burst_size}, acc -> acc + burst_size end)
+  end
+
+  def get_total_runtime_of_all_processes_in_queue(process_queue) do
+    Enum.reduce(process_queue, 0, fn %CpuProcess{burst_size: burst_size}, acc ->
+      acc + burst_size
+    end)
   end
 end
