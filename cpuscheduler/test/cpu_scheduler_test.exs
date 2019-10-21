@@ -43,7 +43,7 @@ defmodule CpuSchedulerTest do
 
       assert calculate_cpu_schedule_data(map) == %SimOutput{
                process_times: [%ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6}],
-               gantt_data: [%GanttDatum{p_name: "p1", time_start: 0, time_stop: 6}],
+               gantt_data: [%GanttDatum{p_name: "p1", start_time: 0, stop_time: 6}],
                average_wait_time: 0,
                average_turn_around_time: 6
              }
@@ -67,9 +67,9 @@ defmodule CpuSchedulerTest do
                    %ProcessTimeDatum{p_name: "p3", wait_time: 14, turnaround_time: 17}
                  ],
                  gantt_data: [
-                   %GanttDatum{p_name: "p1", time_start: 0, time_stop: 6},
-                   %GanttDatum{p_name: "p2", time_start: 6, time_stop: 14},
-                   %GanttDatum{p_name: "p3", time_start: 14, time_stop: 17}
+                   %GanttDatum{p_name: "p1", start_time: 0, stop_time: 6},
+                   %GanttDatum{p_name: "p2", start_time: 6, stop_time: 14},
+                   %GanttDatum{p_name: "p3", start_time: 14, stop_time: 17}
                  ],
                  average_wait_time: 6.67,
                  average_turn_around_time: 12.33

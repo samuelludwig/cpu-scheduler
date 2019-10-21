@@ -41,4 +41,25 @@ defmodule CpuScheduler do
       average_turn_around_time: average_turn_around_time
     }
   end
+
+  def calculate_cpu_schedule_data(%SimParameters{
+        algorithm: :shortest_job_first,
+        processes: processes
+      }) do
+    process_times = Sjf.generate_process_times_list(processes)
+
+    gantt_data = Sjf.generate_gantt_data_list(processes)
+
+    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
+
+    average_turn_around_time =
+      get_average_turnaround_time(process_times) |> Float.round(@precision)
+
+    %SimOutput{
+      process_times: process_times,
+      gantt_data: gantt_data,
+      average_wait_time: average_wait_time,
+      average_turn_around_time: average_turn_around_time
+    }
+  end
 end

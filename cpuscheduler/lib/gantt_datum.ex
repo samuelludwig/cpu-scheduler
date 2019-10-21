@@ -1,11 +1,11 @@
 defmodule GanttDatum do
-  @enforce_keys [:p_name, :time_start, :time_stop]
-  defstruct ~w[p_name time_start time_stop]a
+  @enforce_keys [:p_name, :start_time, :stop_time]
+  defstruct ~w[p_name start_time stop_time]a
 
   @type t() :: %__MODULE__{
           p_name: any(),
-          time_start: integer(),
-          time_stop: integer()
+          start_time: integer(),
+          stop_time: integer()
         }
 
   def new(fields) do
