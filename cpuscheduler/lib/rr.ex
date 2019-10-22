@@ -74,7 +74,10 @@ defmodule Rr do
   end
 
   defp derive_wait_time_and_turnaround_time_from_map_of_gantt_data(p_name, gantt_list) do
-    wait_time = List.first(gantt_list).start_time
+    wait_time =
+      List.first(gantt_list).start_time
+
+
     turnaround_time = List.last(gantt_list).stop_time
     %ProcessTimeDatum{p_name: p_name, wait_time: wait_time, turnaround_time: turnaround_time}
   end

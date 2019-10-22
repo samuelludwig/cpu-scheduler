@@ -118,7 +118,7 @@ defmodule CpuSchedulerTest do
         process_times: [
           %ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6},
           %ProcessTimeDatum{p_name: "p2", wait_time: 6, turnaround_time: 9},
-          %ProcessTimeDatum{p_name: "p3", wait_time: 9, turnaround_time: 23},
+          %ProcessTimeDatum{p_name: "p3", wait_time: 15, turnaround_time: 23},
           %ProcessTimeDatum{p_name: "p4", wait_time: 15, turnaround_time: 21}
         ],
         gantt_data: [
@@ -128,9 +128,10 @@ defmodule CpuSchedulerTest do
           %GanttDatum{p_name: "p4", start_time: 15, stop_time: 21},
           %GanttDatum{p_name: "p3", start_time: 21, stop_time: 23}
         ],
-        average_wait_time: 7.5,
+        average_wait_time: 9,
         average_turnaround_time: 14.75
       },
+
       single_process_sim_output: %SimOutput{
         process_times: [
           %ProcessTimeDatum{
@@ -226,6 +227,50 @@ defmodule CpuSchedulerTest do
     test "returns correctly when given a list of processes", context do
       assert calculate_cpu_schedule_data(context[:sim_params_rr]) ==
                context[:sim_output_rr]
+    end
+
+    test "returns correctly when given a list of process with multiple process burst sizes above quantum" do
+      params = %SimParameters{
+        algorithm: :round_robin,
+        processes: [
+          %CpuProcess{p_name: "p1", burst_size: 6, priority: 1},
+          %CpuProcess{p_name: "p2", burst_size: 3, priority: 2},
+          %CpuProcess{p_name: "p3", burst_size: 8, priority: 3},
+          %CpuProcess{p_name: "p4", burst_size: 6, priority: 2},
+          %CpuProcess{p_name: "p5", burst_size: 7, priority: 2},
+          %CpuProcess{p_name: "p6", burst_size: 6, priority: 2},
+          %CpuProcess{p_name: "p7", burst_size: 13, priority: 2}
+        ],
+        quantum: 6
+      }
+      output = %SimOutput{
+        process_times: [
+          %ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6},
+          %ProcessTimeDatum{p_name: "p2", wait_time: 6, turnaround_time: 9},
+          %ProcessTimeDatum{p_name: "p3", wait_time: 33, turnaround_time: 41},
+          %ProcessTimeDatum{p_name: "p4", wait_time: 15, turnaround_time: 21},
+          %ProcessTimeDatum{p_name: "p5", wait_time: 35, turnaround_time: 42},
+          %ProcessTimeDatum{p_name: "p6", wait_time: 27, turnaround_time: 33},
+          %ProcessTimeDatum{p_name: "p7", wait_time: 36, turnaround_time: 49}
+        ],
+        gantt_data: [
+          %GanttDatum{p_name: "p1", start_time: 0, stop_time: 6},
+          %GanttDatum{p_name: "p2", start_time: 6, stop_time: 9},
+          %GanttDatum{p_name: "p3", start_time: 9, stop_time: 15},
+          %GanttDatum{p_name: "p4", start_time: 15, stop_time: 21},
+          %GanttDatum{p_name: "p5", start_time: 21, stop_time: 27},
+          %GanttDatum{p_name: "p6", start_time: 27, stop_time: 33},
+          %GanttDatum{p_name: "p7", start_time: 33, stop_time: 39},
+          %GanttDatum{p_name: "p3", start_time: 39, stop_time: 41},
+          %GanttDatum{p_name: "p5", start_time: 41, stop_time: 42},
+          %GanttDatum{p_name: "p7", start_time: 42, stop_time: 48},
+          %GanttDatum{p_name: "p7", start_time: 48, stop_time: 49},
+        ],
+        average_wait_time: 21.71,
+        average_turnaround_time: 28.71
+      }
+
+    assert calculate_cpu_schedule_data(params) == output
     end
   end
 end
