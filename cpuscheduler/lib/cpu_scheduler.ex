@@ -1,6 +1,40 @@
 defmodule CpuScheduler do
   import Util
 
+  @moduledoc """
+  Public API for CpuScheduler
+
+  Each function in the CpuScheduler module expects a `%SimParameters{}` struct
+  in the following form:
+
+  ```Elixir
+  %SimParameters{
+    algorithm: algorithm_name,
+    processes: list_of_processes,
+    quantum: quantum_to_be_used
+  }
+  ```
+
+  Where `algorithm_name` must be one of four options:
+  `:first_come_first_serve`, `:shortest_job_first`, `:priority`, or `:round_robin`
+
+  The `quantum` field is only necessary if the Round Robin algorithm is being used.
+
+  Each function will return a `%SimOutput{}` struct in the form of:
+
+  ```Elixir
+  %SimOutput{
+    process_times: list of process with there wait times and turnaround times,
+    gantt_data: ordered blocks of gantt data containing the process name, and start/end time,
+    average_wait_time: average wait time of all processes according to algorithm used,
+    average_turnaround_time: average turnaround time of all processes according to algorithm used
+  }
+  ```
+
+  `average_wait_time` and `average_turnaround_time` are returned as floats with a
+  default precision of 2.
+  """
+
   @precision 2
 
   def calculate_cpu_schedule_data(%SimParameters{processes: nil}) do
