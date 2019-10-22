@@ -12,7 +12,7 @@ defmodule RrTest do
           %CpuProcess{p_name: "p3", burst_size: 8, priority: 3},
           %CpuProcess{p_name: "p4", burst_size: 6, priority: 2}
         ],
-        quantum: 5
+        quantum: 6
       },
       sim_params_rr_single_process: %SimParameters{
         algorithm: :round_robin,
@@ -44,12 +44,30 @@ defmodule RrTest do
   describe "generate_gantt_data_list/3" do
     test "returns a single process's gantt data when given a single process", context do
       assert generate_gantt_data_list(
-        context[:sim_params_rr_single_process].processes,
-        context[:sim_params_rr_single_process].quantum
-      ) == [
-        %GanttDatum{p_name: "p1", start_time: 0, stop_time: 5},
-        %GanttDatum{p_name: "p1", start_time: 5, stop_time: 6}
-      ]
+               context[:sim_params_rr_single_process].processes,
+               context[:sim_params_rr_single_process].quantum
+             ) == [
+               %GanttDatum{p_name: "p1", start_time: 0, stop_time: 5},
+               %GanttDatum{p_name: "p1", start_time: 5, stop_time: 6}
+             ]
+    end
+
+    test "returns correct gantt data list when multiple processes are given", context do
+      assert generate_gantt_data_list(
+               context[:sim_params_rr].processes,
+               context[:sim_params_rr].quantum
+             ) == context[:sim_output_rr].gantt_data
+    end
+  end
+
+  describe "generate_process_times_list/2" do
+    test "returns correctly given one process", context do
+      assert generate_process_times_list(
+               context[:sim_params_rr_single_process].processes,
+               context[:sim_params_rr_single_process].quantum
+             ) == [
+               %ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6}
+             ]
     end
   end
 end
