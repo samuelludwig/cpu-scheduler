@@ -131,7 +131,6 @@ defmodule CpuSchedulerTest do
         average_wait_time: 9,
         average_turnaround_time: 14.75
       },
-
       single_process_sim_output: %SimOutput{
         process_times: [
           %ProcessTimeDatum{
@@ -243,6 +242,7 @@ defmodule CpuSchedulerTest do
         ],
         quantum: 6
       }
+
       output = %SimOutput{
         process_times: [
           %ProcessTimeDatum{p_name: "p1", wait_time: 0, turnaround_time: 6},
@@ -264,13 +264,13 @@ defmodule CpuSchedulerTest do
           %GanttDatum{p_name: "p3", start_time: 39, stop_time: 41},
           %GanttDatum{p_name: "p5", start_time: 41, stop_time: 42},
           %GanttDatum{p_name: "p7", start_time: 42, stop_time: 48},
-          %GanttDatum{p_name: "p7", start_time: 48, stop_time: 49},
+          %GanttDatum{p_name: "p7", start_time: 48, stop_time: 49}
         ],
         average_wait_time: 21.71,
         average_turnaround_time: 28.71
       }
 
-    assert calculate_cpu_schedule_data(params) == output
+      assert calculate_cpu_schedule_data(params) == output
     end
   end
 end

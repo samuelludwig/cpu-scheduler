@@ -5,7 +5,7 @@ defmodule Rr do
 
   def generate_process_times_list(process_queue, quantum) do
     generate_gantt_data_list(process_queue, quantum)
-    |> condense_gantt_data_into_process_time_data()
+    |> condense_gantt_data_into_process_time_data(process_queue)
   end
 
   # We use a recursive solution for generating the gantt data list as we are
@@ -73,20 +73,36 @@ defmodule Rr do
     last_block.stop_time
   end
 
-  defp derive_wait_time_and_turnaround_time_from_map_of_gantt_data(p_name, gantt_list) do
-    wait_time =
-      List.first(gantt_list).start_time
-
-
+  defp derive_wait_time_and_turnaround_time_from_map_of_gantt_data(
+         p_name,
+         process_queue,
+         gantt_list
+       ) do
     turnaround_time = List.last(gantt_list).stop_time
+    wait_time = turnaround_time - Util.get_burst_size_of_process_in_queue(process_queue, p_name)
     %ProcessTimeDatum{p_name: p_name, wait_time: wait_time, turnaround_time: turnaround_time}
   end
 
-  defp condense_gantt_data_into_process_time_data(gantt_data) do
+  defp condense_gantt_data_into_process_time_data(gantt_data, process_queue) do
     gantt_data
-    |> Enum.group_by(fn %GanttDatum{p_name: p_name} -> p_name end)
-    |> Enum.map(fn {p_name, process_gantt_list} ->
-      derive_wait_time_and_turnaround_time_from_map_of_gantt_data(p_name, process_gantt_list)
+    |> group_gantt_data_by_process_name()
+    |> build_process_time_datum_for_each_process_in_gantt_data(process_queue)
+  end
+
+  defp group_gantt_data_by_process_name(gantt_data) do
+    Enum.group_by(gantt_data, fn %GanttDatum{p_name: p_name} -> p_name end)
+  end
+
+  defp build_process_time_datum_for_each_process_in_gantt_data(
+         list_of_gantt_groups,
+         process_queue
+       ) do
+    Enum.map(list_of_gantt_groups, fn {p_name, process_gantt_list} ->
+      derive_wait_time_and_turnaround_time_from_map_of_gantt_data(
+        p_name,
+        process_queue,
+        process_gantt_list
+      )
     end)
   end
 end
