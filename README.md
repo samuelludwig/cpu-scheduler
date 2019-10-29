@@ -6,7 +6,7 @@ of algorithms regarding the scheduling of CPU processes.
 
 The tech stack employed will be as follows:
 
-- Backend: Elixir + Phoenix
+- Backend: Elixir
 - Frontend: Elm
 
 ## Raison D'être
