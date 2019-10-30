@@ -141,4 +141,3 @@ defmodule CpuScheduler do
     {average_wait_time, average_turnaround_time}
   end
 end
-
