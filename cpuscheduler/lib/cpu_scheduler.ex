@@ -24,7 +24,7 @@ defmodule CpuScheduler do
 
   ```Elixir
   %SimOutput{
-    process_times: list of process with there wait times and turnaround times,
+    process_times: list of processes with their wait times and turnaround times,
     gantt_data: ordered blocks of gantt data containing the process name, and start/end time,
     average_wait_time: average wait time of all processes according to algorithm used,
     average_turnaround_time: average turnaround time of all processes according to algorithm used
@@ -63,10 +63,8 @@ defmodule CpuScheduler do
 
     gantt_data = Fcfs.generate_gantt_data_list(processes)
 
-    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
-
-    average_turnaround_time =
-      get_average_turnaround_time(process_times) |> Float.round(@precision)
+    {average_wait_time, average_turnaround_time} =
+      calculate_average_wait_and_turnaround_time_based_on_process_times(process_times)
 
     %SimOutput{
       process_times: process_times,
@@ -84,10 +82,8 @@ defmodule CpuScheduler do
 
     gantt_data = Sjf.generate_gantt_data_list(processes)
 
-    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
-
-    average_turnaround_time =
-      get_average_turnaround_time(process_times) |> Float.round(@precision)
+    {average_wait_time, average_turnaround_time} =
+      calculate_average_wait_and_turnaround_time_based_on_process_times(process_times)
 
     %SimOutput{
       process_times: process_times,
@@ -105,10 +101,8 @@ defmodule CpuScheduler do
 
     gantt_data = Priority.generate_gantt_data_list(processes)
 
-    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
-
-    average_turnaround_time =
-      get_average_turnaround_time(process_times) |> Float.round(@precision)
+    {average_wait_time, average_turnaround_time} =
+      calculate_average_wait_and_turnaround_time_based_on_process_times(process_times)
 
     %SimOutput{
       process_times: process_times,
@@ -127,10 +121,8 @@ defmodule CpuScheduler do
 
     gantt_data = Rr.generate_gantt_data_list(processes, quantum)
 
-    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
-
-    average_turnaround_time =
-      get_average_turnaround_time(process_times) |> Float.round(@precision)
+    {average_wait_time, average_turnaround_time} =
+      calculate_average_wait_and_turnaround_time_based_on_process_times(process_times)
 
     %SimOutput{
       process_times: process_times,
@@ -139,4 +131,14 @@ defmodule CpuScheduler do
       average_turnaround_time: average_turnaround_time
     }
   end
+
+  defp calculate_average_wait_and_turnaround_time_based_on_process_times(process_times) do
+    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
+
+    average_turnaround_time =
+      get_average_turnaround_time(process_times) |> Float.round(@precision)
+
+    {average_wait_time, average_turnaround_time}
+  end
 end
+
