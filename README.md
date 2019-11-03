@@ -11,9 +11,7 @@ The tech stack employed will be as follows:
 
 ## Raison D'être
 
-- Elixir is a language that I am pretty confident with by now, but the Phoenix 
-framework not as much, so this is an opportunity to learn and work more with 
-that, and web dev in general.
+- Elixir is a language that I am pretty confident with by now.
 - I wanted to try out using Dave Thomas' "Component-based Design/Architecture" 
 idea, meaning each part of my program should be built as if it were a separate 
 library, with a well defined API that can be used by any module calling it.
