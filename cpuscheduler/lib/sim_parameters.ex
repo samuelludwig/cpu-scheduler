@@ -9,7 +9,7 @@ defmodule SimParameters do
             | :round_robin
             | :priority,
           processes: [CpuProcess.t()] | nil,
-          quantum: integer() | nil
+          quantum: pos_integer() | nil
         }
 
   def new(fields) do
