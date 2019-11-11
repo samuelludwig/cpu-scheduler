@@ -1,10 +1,12 @@
 module Main exposing (Model)
 
+import Browser
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Html exposing (Html)
 import Random
 
 
@@ -13,8 +15,12 @@ import Random
 
 
 main =
-    Element.layout []
-        (view initial_model)
+    Browser.element
+        { init = initial_model
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
 
 
@@ -57,23 +63,17 @@ type alias SimOutput =
     }
 
 
-type alias Randomizer =
-    { number_of_processes : Int
-    , lowest_burst_size : Int
-    , highest_burst_size : Int
-    }
-
-
 type alias Model =
     { sim_parameter_record : SimParameters
     , sim_output_record : SimOutput
-    , randomizer_record : Randomizer
     , seed : Random.Seed
+    , process_burst_size_input : String
+    , process_priority_input : String
     }
 
 
-initial_model : ( Model, Cmd msg )
-initial_model =
+initial_model : () -> ( Model, Cmd Msg )
+initial_model _ =
     ( { sim_parameter_record =
             { algorithm = "FCFS"
             , processes = []
@@ -85,12 +85,9 @@ initial_model =
             , average_wait_time = 0
             , average_turnaround_time = 0
             }
-      , randomizer_record =
-            { number_of_processes = 0
-            , lowest_burst_size = 0
-            , highest_burst_size = 0
-            }
-      , seed = Random.initialSeed 
+      , seed = Random.initialSeed 31415
+      , process_burst_size_input = "32"
+      , process_priority_input = "32"
       }
     , Cmd.none
     )
@@ -100,50 +97,98 @@ initial_model =
 -- VIEW
 
 
-view : ( Model, Cmd msg ) -> Element msg
-view ( model, msg ) =
-    headerRow
+view : Model -> Html Msg
+view model =
+    Element.layout [ Background.color color_palatte.background_1 ] <|
+        column [ height fill, width fill ]
+            [ headerRow
+            , addProcessRow model
+            ]
 
 
-header : Element msg
+header : Element Msg
 header =
     el
         [ centerX
-        , Font.color color_palatte.white
+        , Font.color color_palatte.text_1
         , Font.size size_palatte.large
         ]
         (text "CPU Scheduler")
 
-headerRow : Element msg
+
+headerRow : Element Msg
 headerRow =
     row
         [ width fill
-        , Background.color color_palatte.seafoam_green
+        , Background.color color_palatte.background_1
         , alignTop
         , padding 30
         ]
         [ header ]
 
-addProcessRow : Element msg
-addProcessRow =
+
+addProcessRow : Model -> Element Msg
+addProcessRow model =
     row
         [ width fill
-        , Background.color color_palatte.seafoam_green] []
+        , Background.color color_palatte.background_1
+        ]
+        [ addProcessButton model
+        , processBurstSizePrompt
+        , processBurstSizeEntry model
+        , processPriorityPrompt
+        , processPriorityEntry model
+        ]
 
-processBurstSizePrompt : Element msg
+
+processBurstSizePrompt : Element Msg
 processBurstSizePrompt =
     el
-        [ Font.color color_palatte.white
+        [ Font.color color_palatte.text_1
         , Font.size size_palatte.normal
         ]
         (text "Process burst size:")
 
-processBurstSizeEntry : Element msg
-processBurstSizeEntry =
+
+processBurstSizeEntry : Model -> Element Msg
+processBurstSizeEntry model =
     Input.text
-        { placeholder = text "32"
-        , label = text "burst_size"
+        []
+        { placeholder = Just (Input.placeholder [] (text "32"))
+        , label = Input.labelHidden "burst_size"
+        , text = model.process_burst_size_input
+        , onChange = \new -> Update { model | process_burst_size_input = new }
         }
+
+
+processPriorityPrompt : Element Msg
+processPriorityPrompt =
+    el
+        [ Font.color color_palatte.text_1
+        , Font.size size_palatte.normal
+        ]
+        (text "Process priority:")
+
+
+processPriorityEntry : Model -> Element Msg
+processPriorityEntry model =
+    Input.text
+        []
+        { placeholder = Just (Input.placeholder [] (text "32"))
+        , label = Input.labelHidden "priority"
+        , text = model.process_priority_input
+        , onChange = \new -> Update { model | process_priority_input = new }
+        }
+
+
+addProcessButton : Model -> Element Msg
+addProcessButton model =
+    Input.button
+        []
+        { label = text "ADD"
+        , onPress = Nothing
+        }
+
 
 size_palatte =
     { xxsmall = 4
@@ -155,22 +200,34 @@ size_palatte =
     , xxlarge = 256
     }
 
+
 color_palatte =
-    { seafoam_green = (rgb255 113 238 184)
-    , white = (rgb 255 255 255)
+    { background_1 = rgb255 113 238 184
+    , text_1 = rgb 255 255 255
     }
+
+
 
 -- UPDATE
 
 
 type Msg
-    = RandomInteger Int
-    | AddProcess CpuProcess
-    | RemoveProcess Int
-    | AddRandomizerProcesses
-    | CalculateSimOutput
-    | ChangeAlgorithm
-    | ChangeQuantum
+    = Update Model
+    | AddProcess
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        Update new ->
+            ( new, Cmd.none )
+
+        AddProcess ->
+            let
+                cpu_process =
+                    { p_name = "", burst_size = model.process_burst_size_input, priority = model.process_priority_input }
+            in
+            ( model, Cmd.none )
 
 
 setSeed : Random.Seed -> Model -> Model
@@ -185,27 +242,6 @@ setNewSeed model =
             Tuple.second (Random.step (Random.int 0 0) model.seed)
     in
     setSeed new_seed model
-
-
-setRandomizerNumberOfProcesses : Int -> Model -> Model
-setRandomizerNumberOfProcesses number ({ randomizer_record } as model) =
-    { model
-        | randomizer_record = { randomizer_record | number_of_processes = number }
-    }
-
-
-setRandomizerLowestBurstSize : Int -> Model -> Model
-setRandomizerLowestBurstSize number ({ randomizer_record } as model) =
-    { model
-        | randomizer_record = { randomizer_record | lowest_burst_size = number }
-    }
-
-
-setRandomizerHighestBurstSize : Int -> Model -> Model
-setRandomizerHighestBurstSize number ({ randomizer_record } as model) =
-    { model
-        | randomizer_record = { randomizer_record | highest_burst_size = number }
-    }
 
 
 addProcessToSimParameterRecord : CpuProcess -> Model -> Model
@@ -240,53 +276,6 @@ generateRandomIntBetweenXAndY x y =
     Random.int x y
 
 
-buildCpuProcessFromRandomizerParameters : Randomizer -> Model -> CpuProcess
-buildCpuProcessFromRandomizerParameters randomizer model =
-    let
-        size =
-            randomNumberBetweenXAndY randomizer.lowest_burst_size randomizer.highest_burst_size model
-
-        pri =
-            randomNumberBetween0And127 model
-    in
-    { p_name = "Pn", burst_size = size, priority = pri }
-
-
-addProcessesToSimParameterRecordFromRandomizerFields : Randomizer -> Model -> Model
-addProcessesToSimParameterRecordFromRandomizerFields randomizer ({ sim_parameter_record } as model) =
-    let
-        cpu_process =
-            buildCpuProcessFromRandomizerParameters randomizer model
-    in
-    addProcessToSimParameterRecord cpu_process model
-        |> setNewSeed
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        RandomInteger num ->
-            ( model, Cmd.none )
-
-        AddProcess cpu_process ->
-            ( addProcessToSimParameterRecord cpu_process model, Cmd.none )
-
-        RemoveProcess num ->
-            ( removeProcessFromSimParameterRecord num model, Cmd.none )
-
-        AddRandomizerProcesses ->
-            ( model, Cmd.none )
-
-        CalculateSimOutput ->
-            ( model, Cmd.none )
-
-        ChangeAlgorithm ->
-            ( model, Cmd.none )
-
-        ChangeQuantum ->
-            ( model, Cmd.none )
-
-
 
 -- COMMAND
 
@@ -299,3 +288,12 @@ randomNumberBetween0And127 model =
 randomNumberBetweenXAndY : Int -> Int -> Model -> Int
 randomNumberBetweenXAndY x y model =
     Random.step (generateRandomIntBetweenXAndY x y) model.seed |> Tuple.first
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
