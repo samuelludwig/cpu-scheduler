@@ -90,8 +90,8 @@ initial_model _ =
             , average_turnaround_time = 0
             }
       , seed = Random.initialSeed 31415
-      , process_burst_size_input = "32"
-      , process_priority_input = "32"
+      , process_burst_size_input = "8"
+      , process_priority_input = "4"
       }
     , Cmd.none
     )
@@ -106,19 +106,59 @@ view model =
     Element.layout [ Background.color color_palette.background_1 ] <|
         column [ height fill, width fill ]
             [ headerRow
-            , processTable model
-            , processTimesTable model
-            , averageTurnaroundTimeRow model
+            , algorithmSelector model
+            , quantumRow model
+            , outputTablesRow model
+            , averageTimesRow model
+            , ganttChart model
             , addProcessRow model
             ]
 
-averageTurnaroundTimeRow : Model -> Element Msg
-averageTurnaroundTimeRow model =
+quantumPrompt : Model -> Element Msg
+quantumPrompt model =
+    el
+        []
+        (text "Quantum")
+
+quantumEntry : Model -> Element Msg
+quantumEntry ({sim_parameter_record} as model) =
+    Input.text
+        []
+        { placeholder = Just (Input.placeholder [] (text "6"))
+        , label = Input.labelHidden "quantum"
+        , text = String.fromInt model.sim_parameter_record.quantum
+        , onChange =
+              \new ->
+                  Update { model
+                         | sim_parameter_record = {sim_parameter_record | quantum = (Maybe.withDefault 0 (String.toInt new))}
+                         }
+        }
+
+quantumRow : Model -> Element Msg
+quantumRow model =
     row
         []
-            [ averageTurnaroundTimeLabel model
-            , averageTurnaroundTimeDisplay model
-            ]
+        [ quantumPrompt model
+        , quantumEntry model
+        ]
+
+ganttChart : Model -> Element Msg
+ganttChart model =
+    el
+        []
+        (text (ganttDataToString model))
+
+
+averageTimesRow : Model -> Element Msg
+averageTimesRow model =
+    row
+        []
+        [ averageTurnaroundTimeLabel model
+        , averageTurnaroundTimeDisplay model
+        , averageWaitTimeLabel model
+        , averageWaitTimeDisplay model
+        ]
+
 
 header : Element Msg
 header =
@@ -172,7 +212,7 @@ processBurstSizeEntry : Model -> Element Msg
 processBurstSizeEntry model =
     Input.text
         []
-        { placeholder = Just (Input.placeholder [] (text "32"))
+        { placeholder = Just (Input.placeholder [] (text "8"))
         , label = Input.labelHidden "burst_size"
         , text = model.process_burst_size_input
         , onChange = \new -> Update { model | process_burst_size_input = new }
@@ -192,7 +232,7 @@ processPriorityEntry : Model -> Element Msg
 processPriorityEntry model =
     Input.text
         []
-        { placeholder = Just (Input.placeholder [] (text "32"))
+        { placeholder = Just (Input.placeholder [] (text "4"))
         , label = Input.labelHidden "priority"
         , text = model.process_priority_input
         , onChange = \new -> Update { model | process_priority_input = new }
@@ -275,19 +315,66 @@ processTimesTable model =
             ]
         }
 
+
+outputTablesRow : Model -> Element Msg
+outputTablesRow model =
+    row
+        []
+        [ processTable model
+        , processTimesTable model
+        ]
+
+
 averageTurnaroundTimeLabel : Model -> Element Msg
 averageTurnaroundTimeLabel model =
     Element.el
-    [ Font.color color_palette.text_1
-    , Font.size size_palette.normal
-    ]
-    ( text "Average Turnaround Time:")
+        [ Font.color color_palette.text_1
+        , Font.size size_palette.normal
+        ]
+        (text "Average Turnaround Time:")
+
 
 averageTurnaroundTimeDisplay : Model -> Element Msg
 averageTurnaroundTimeDisplay model =
     Element.el
-    []
-    ( text (String.fromFloat model.sim_output_record.average_turnaround_time))
+        []
+        (text (String.fromFloat model.sim_output_record.average_turnaround_time))
+
+
+averageWaitTimeLabel : Model -> Element Msg
+averageWaitTimeLabel model =
+    Element.el
+        [ Font.color color_palette.text_1
+        , Font.size size_palette.normal
+        ]
+        (text "Average Wait Time:")
+
+
+averageWaitTimeDisplay : Model -> Element Msg
+averageWaitTimeDisplay model =
+    Element.el
+        []
+        (text (String.fromFloat model.sim_output_record.average_wait_time))
+
+
+algorithmSelector : Model -> Element Msg
+algorithmSelector ({ sim_parameter_record } as model) =
+    Input.radio
+        [ padding 10
+        , spacing 20
+        ]
+        { onChange = \new -> Update { model | sim_parameter_record = { sim_parameter_record | algorithm = new } }
+        , selected = Just model.sim_parameter_record.algorithm
+        , label = Input.labelAbove [] (text "Algorithm")
+        , options =
+            [ Input.option "first_come_first_serve" (text "FCFS")
+            , Input.option "shortest_job_first" (text "SJF")
+            , Input.option "priority" (text "PRI")
+            , Input.option "round_robin" (text "RR")
+            ]
+        }
+
+
 
 -- PALETTES
 
@@ -314,16 +401,43 @@ color_palette =
 -- UPDATE
 
 
+ganttDatumToString : GanttDatum -> String
+ganttDatumToString datum =
+    let
+        name =
+            datum.p_name
+
+        start =
+            String.fromInt datum.start_time
+
+        stop =
+            String.fromInt datum.stop_time
+    in
+    "| " ++ start ++ " <- " ++ name ++ " -> " ++ stop ++ " |"
+
+
+ganttDataToString : Model -> String
+ganttDataToString model =
+    let
+        data =
+            model.sim_output_record.gantt_data
+
+        stringified_data =
+            List.map ganttDatumToString data
+    in
+    String.join "" stringified_data
+
+
 type Msg
     = Update Model
     | AddProcess Model
     | CalculateOutput
-    | DataReceived (Result Http.Error String)
+    | DataReceived (Result Http.Error SimOutput)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
+    case Debug.log "Message: " msg of
         Update new ->
             ( new, Cmd.none )
 
@@ -340,11 +454,7 @@ update msg model =
             )
 
         DataReceived (Ok str) ->
-            let
-                output =
-                    decodeJsonIntoSimOutputRecord str
-            in
-            ( { model | sim_output_record = output }, Cmd.none )
+            ( { model | sim_output_record = str }, Cmd.none )
 
         DataReceived (Err _) ->
             ( model, Cmd.none )
@@ -424,55 +534,6 @@ randomizeInputFieldValues model =
     model
 
 
-encodeSimParameterRecordIntoJson : Model -> Encode.Value
-encodeSimParameterRecordIntoJson model =
-    let
-        algorithm =
-            model.sim_parameter_record.algorithm
-
-        quantum =
-            model.sim_parameter_record.quantum
-
-        processes =
-            model.sim_parameter_record.processes
-    in
-    object
-        [ ( "algorithm", Encode.string algorithm )
-        , ( "quantum", Encode.int quantum )
-        , encodeListOfProcessesIntoJson processes
-        ]
-
-
-encodeProcessRecordIntoJson : CpuProcess -> Encode.Value
-encodeProcessRecordIntoJson process =
-    object
-        [ ( "p_name", Encode.string process.p_name )
-        , ( "burst_size", Encode.int process.burst_size )
-        , ( "priority", Encode.int process.priority )
-        ]
-
-
-encodeListOfProcessesIntoJson : List CpuProcess -> ( String, Encode.Value )
-encodeListOfProcessesIntoJson process_list =
-    let
-        list_of_values =
-            List.map encodeProcessRecordIntoJson process_list
-
-        list_of_encoded_strings =
-            List.map (encode 0) list_of_values
-    in
-    ( "processes", Encode.list Encode.string list_of_encoded_strings )
-
-
-buildHttpRequest : Model -> Cmd Msg
-buildHttpRequest model =
-    Http.post
-        { url = "http://127.0.0.1:8085/calculate"
-        , body = Http.jsonBody (encodeSimParameterRecordIntoJson model)
-        , expect = Http.expectJson DataReceived Decode.string
-        }
-
-
 decodeJsonIntoSimOutputRecord : String -> SimOutput
 decodeJsonIntoSimOutputRecord str =
     case Decode.decodeString simOutputDecoder str of
@@ -480,11 +541,47 @@ decodeJsonIntoSimOutputRecord str =
             record
 
         Err error ->
-            { process_times = [{p_name = "PX", wait_time = 0, turnaround_time = 1}]
-            , gantt_data = [{p_name = "PX", start_time = 0, stop_time = 1}]
+            { process_times = [ { p_name = "PX", wait_time = 0, turnaround_time = 1 } ]
+            , gantt_data = [ { p_name = "PX", start_time = 0, stop_time = 1 } ]
             , average_wait_time = 3.2
             , average_turnaround_time = 3.2
             }
+
+
+
+-- COMMAND
+
+
+buildHttpRequest : Model -> Cmd Msg
+buildHttpRequest model =
+    Http.post
+        { url = "http://127.0.0.1:8085/calculate"
+        , body = Http.jsonBody (encodeSimParameterRecordIntoJson model)
+        , expect = Http.expectJson DataReceived simOutputDecoder
+        }
+
+
+randomNumberBetween0And127 : Model -> Int
+randomNumberBetween0And127 model =
+    Random.step generateRandomIntBetween0And127 model.seed |> Tuple.first
+
+
+randomNumberBetweenXAndY : Int -> Int -> Model -> Int
+randomNumberBetweenXAndY x y model =
+    Random.step (generateRandomIntBetweenXAndY x y) model.seed |> Tuple.first
+
+
+
+-- SUBSCRIPTIONS
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.none
+
+
+
+-- DECODERS
 
 
 simOutputDecoder : Decoder SimOutput
@@ -523,23 +620,44 @@ processTimeDatumDecoder =
 
 
 
--- COMMAND
+-- ENCODERS
 
 
-randomNumberBetween0And127 : Model -> Int
-randomNumberBetween0And127 model =
-    Random.step generateRandomIntBetween0And127 model.seed |> Tuple.first
+encodeSimParameterRecordIntoJson : Model -> Encode.Value
+encodeSimParameterRecordIntoJson model =
+    let
+        algorithm =
+            model.sim_parameter_record.algorithm
+
+        quantum =
+            model.sim_parameter_record.quantum
+
+        processes =
+            model.sim_parameter_record.processes
+    in
+    object
+        [ ( "algorithm", Encode.string algorithm )
+        , ( "quantum", Encode.int quantum )
+        , encodeListOfProcessesIntoJson processes
+        ]
 
 
-randomNumberBetweenXAndY : Int -> Int -> Model -> Int
-randomNumberBetweenXAndY x y model =
-    Random.step (generateRandomIntBetweenXAndY x y) model.seed |> Tuple.first
+encodeProcessRecordIntoJson : CpuProcess -> Encode.Value
+encodeProcessRecordIntoJson process =
+    object
+        [ ( "p_name", Encode.string process.p_name )
+        , ( "burst_size", Encode.int process.burst_size )
+        , ( "priority", Encode.int process.priority )
+        ]
 
 
+encodeListOfProcessesIntoJson : List CpuProcess -> ( String, Encode.Value )
+encodeListOfProcessesIntoJson process_list =
+    let
+        list_of_values =
+            List.map encodeProcessRecordIntoJson process_list
 
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+        list_of_encoded_strings =
+            List.map (encode 0) list_of_values
+    in
+    ( "processes", Encode.list Encode.string list_of_encoded_strings )
