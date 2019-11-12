@@ -1,4 +1,7 @@
 # cpu-scheduler
+
+GitHub repo located at: https://github.com/samuelludwig/cpu-scheduler
+
 CPU Scheduler Simulation project for COM310
 
 Task: Create an interactive webapp that displays the impact of different kinds 
@@ -6,15 +9,15 @@ of algorithms regarding the scheduling of CPU processes.
 
 The tech stack employed will be as follows:
 
-- Backend: Elixir
+- Backend: Elixir (using Cowboy to manage the server connections)
 - Frontend: Elm
 
 ## Project Structure
 
 - `cpuscheduler`: Takes in a struct containing the parameters for the simulation, calculates the output of the simulation based on those parameters, and returns the output in another struct.
 - `cpuscheduler_adapter`: Takes in a JSON object and transforms it into a struct that can be sent to the base `cpuscheduler`, it will then turn the returned struct *back* into JSON and return that.
-- `cpuscheduler_http_server`: Starts up a server on `localhost:8085` with one available path- `/calculate`. The server waits for an HTTP Post request with a JSON body, which it then passes to the `cpuscheduler_adapter` component, it sends the JSON it gets back from the adapter as an HTTP response.
-- `cpuscheduler_frontend`: Web client written in the Elm programming language, acts as the user interface for the simulator.
+- `cpuscheduler_http_server`: Starts up a server on `localhost:8085` with one available path- `/calculate`. The server waits for an HTTP POST request with a JSON body, which it then passes to the `cpuscheduler_adapter` component, it sends the JSON it gets back from the adapter as an HTTP response.
+- `cpuscheduler_frontend`: Web client written in the Elm programming language, acts as the user interface for the simulator, will make POST requests to the HTTP server and receive the response.
 
 ## Raison D'être
 
