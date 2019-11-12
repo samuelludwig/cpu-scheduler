@@ -9,10 +9,18 @@ The tech stack employed will be as follows:
 - Backend: Elixir
 - Frontend: Elm
 
+## Project Structure
+
+- `cpuscheduler`: Takes in a struct containing the parameters for the simulation, calculates the output of the simulation based on those parameters, and returns the output in another struct.
+- `cpuscheduler_adapter`: Takes in a JSON object and transforms it into a struct that can be sent to the base `cpuscheduler`, it will then turn the returned struct *back* into JSON and return that.
+- `cpuscheduler_http_server`: Starts up a server on `localhost:8085` with one available path- `/calculate`. The server waits for an HTTP Post request with a JSON body, which it then passes to the `cpuscheduler_adapter` component, it sends the JSON it gets back from the adapter as an HTTP response.
+- `cpuscheduler_frontend`: Web client written in the Elm programming language, acts as the user interface for the simulator.
+
 ## Raison D'être
 
-- Elixir is a language that I am pretty confident with by now.
-- I wanted to try out using Dave Thomas' "Component-based Design/Architecture** 
+- Elixir is a language that I am pretty confident with by now, but have done 
+limited work with it at scale.
+- I wanted to try out using Dave Thomas' "Component-based Design/Architecture" 
 idea, meaning each part of my program should be built as if it were a separate 
 library, with a well defined API that can be used by any module calling it.
 - I wanted an opportunity to try out TDD on something more complex then a toy 
@@ -23,7 +31,7 @@ front-end for an application in quite some time.
 
 ***
 
-## NOTE Regarding SJF and Priority Algorithms
+## Note Regarding SJF and Priority Algorithms
 
 - The implementation for the SJF and Priority algorithms make use of Elixir's `Enum.sort/2` function when determining the order in which processes are to be executed by the CPU. This sorting function is actually a Merge-Sort under the hood, this means that there may be situations in which (when identical values are entered for processes) the order is slightly different from what might be anticipated (but not erroneous).
 - For example, in the SJF implementation, if the following process list was given:
