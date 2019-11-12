@@ -35,7 +35,9 @@ defmodule JsonHandler do
   end
 
   defp convert_processes_into_cpu_process_structs(%{processes: processes} = input_map)
-       when not is_nil(processes) do
+  when not is_nil(processes) do
+    IO.inspect(input_map)
+    input_map = %{input_map | processes: Enum.map(processes, &Jason.decode!(&1, keys: :atoms!))}
     %{input_map | processes: Enum.map(input_map.processes, &cast_map_to_cpu_process_struct/1)}
   end
 

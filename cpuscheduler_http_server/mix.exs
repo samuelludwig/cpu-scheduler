@@ -26,6 +26,7 @@ defmodule CpuschedulerHttpServer.MixProject do
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
       {:cowboy, "~> 2.7"},
       {:plug, "~> 1.8"},
+      {:corsica, "~> 1.0"},
       {:plug_cowboy, "~> 2.1"},
       {:cpuscheduler_adapter, path: "../cpuscheduler_adapter"}
     ]

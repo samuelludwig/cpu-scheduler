@@ -7,6 +7,10 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html exposing (Html)
+import Http
+import Json.Decode as Decode exposing (..)
+import Json.Decode.Pipeline exposing (optional, optionalAt, required, requiredAt)
+import Json.Encode as Encode exposing (..)
 import Random
 
 
@@ -75,9 +79,9 @@ type alias Model =
 initial_model : () -> ( Model, Cmd Msg )
 initial_model _ =
     ( { sim_parameter_record =
-            { algorithm = "FCFS"
+            { algorithm = "first_come_first_serve"
             , processes = []
-            , quantum = 0
+            , quantum = 6
             }
       , sim_output_record =
             { process_times = []
@@ -99,19 +103,29 @@ initial_model _ =
 
 view : Model -> Html Msg
 view model =
-    Element.layout [ Background.color color_palatte.background_1 ] <|
+    Element.layout [ Background.color color_palette.background_1 ] <|
         column [ height fill, width fill ]
             [ headerRow
+            , processTable model
+            , processTimesTable model
+            , averageTurnaroundTimeRow model
             , addProcessRow model
             ]
 
+averageTurnaroundTimeRow : Model -> Element Msg
+averageTurnaroundTimeRow model =
+    row
+        []
+            [ averageTurnaroundTimeLabel model
+            , averageTurnaroundTimeDisplay model
+            ]
 
 header : Element Msg
 header =
     el
         [ centerX
-        , Font.color color_palatte.text_1
-        , Font.size size_palatte.large
+        , Font.color color_palette.text_1
+        , Font.size size_palette.large
         ]
         (text "CPU Scheduler")
 
@@ -120,9 +134,10 @@ headerRow : Element Msg
 headerRow =
     row
         [ width fill
-        , Background.color color_palatte.background_1
+        , Background.color color_palette.background_1
         , alignTop
-        , padding 30
+        , padding size_palette.normal
+        , spacing size_palette.normal
         ]
         [ header ]
 
@@ -131,21 +146,24 @@ addProcessRow : Model -> Element Msg
 addProcessRow model =
     row
         [ width fill
-        , Background.color color_palatte.background_1
+        , Background.color color_palette.background_1
+        , padding size_palette.normal
+        , spacing size_palette.normal
         ]
         [ addProcessButton model
         , processBurstSizePrompt
         , processBurstSizeEntry model
         , processPriorityPrompt
         , processPriorityEntry model
+        , calculateButton model
         ]
 
 
 processBurstSizePrompt : Element Msg
 processBurstSizePrompt =
     el
-        [ Font.color color_palatte.text_1
-        , Font.size size_palatte.normal
+        [ Font.color color_palette.text_1
+        , Font.size size_palette.normal
         ]
         (text "Process burst size:")
 
@@ -164,8 +182,8 @@ processBurstSizeEntry model =
 processPriorityPrompt : Element Msg
 processPriorityPrompt =
     el
-        [ Font.color color_palatte.text_1
-        , Font.size size_palatte.normal
+        [ Font.color color_palette.text_1
+        , Font.size size_palette.normal
         ]
         (text "Process priority:")
 
@@ -184,13 +202,97 @@ processPriorityEntry model =
 addProcessButton : Model -> Element Msg
 addProcessButton model =
     Input.button
-        []
+        [ Font.color color_palette.text_1
+        , Font.size size_palette.normal
+        , Border.color color_palette.border_1
+        ]
         { label = text "ADD"
-        , onPress = Nothing
+        , onPress = Just (AddProcess model)
         }
 
 
-size_palatte =
+calculateButton : Model -> Element Msg
+calculateButton model =
+    Input.button
+        []
+        { label = text "CALCULATE"
+        , onPress = Just CalculateOutput
+        }
+
+
+processTable : Model -> Element Msg
+processTable model =
+    Element.table
+        []
+        { data = model.sim_parameter_record.processes
+        , columns =
+            [ { header = Element.text "Process Name"
+              , width = fill
+              , view =
+                    \process ->
+                        Element.text process.p_name
+              }
+            , { header = Element.text "Burst Size"
+              , width = fill
+              , view =
+                    \process ->
+                        Element.text (String.fromInt process.burst_size)
+              }
+            , { header = Element.text "Priority"
+              , width = fill
+              , view =
+                    \process ->
+                        Element.text (String.fromInt process.priority)
+              }
+            ]
+        }
+
+
+processTimesTable : Model -> Element Msg
+processTimesTable model =
+    Element.table
+        []
+        { data = model.sim_output_record.process_times
+        , columns =
+            [ { header = Element.text "Process Name"
+              , width = fill
+              , view =
+                    \process ->
+                        Element.text process.p_name
+              }
+            , { header = Element.text "Wait Time"
+              , width = fill
+              , view =
+                    \process ->
+                        Element.text (String.fromInt process.wait_time)
+              }
+            , { header = Element.text "Turnaround Time"
+              , width = fill
+              , view =
+                    \process ->
+                        Element.text (String.fromInt process.turnaround_time)
+              }
+            ]
+        }
+
+averageTurnaroundTimeLabel : Model -> Element Msg
+averageTurnaroundTimeLabel model =
+    Element.el
+    [ Font.color color_palette.text_1
+    , Font.size size_palette.normal
+    ]
+    ( text "Average Turnaround Time:")
+
+averageTurnaroundTimeDisplay : Model -> Element Msg
+averageTurnaroundTimeDisplay model =
+    Element.el
+    []
+    ( text (String.fromFloat model.sim_output_record.average_turnaround_time))
+
+-- PALETTES
+
+
+size_palette =
     { xxsmall = 4
     , xsmall = 8
     , small = 16
@@ -201,9 +303,10 @@ size_palatte =
     }
 
 
-color_palatte =
+color_palette =
     { background_1 = rgb255 113 238 184
-    , text_1 = rgb 255 255 255
+    , text_1 = rgb255 255 255 255
+    , border_1 = rgb255 113 238 255
     }
 
 
@@ -213,7 +316,9 @@ color_palatte =
 
 type Msg
     = Update Model
-    | AddProcess
+    | AddProcess Model
+    | CalculateOutput
+    | DataReceived (Result Http.Error String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -222,11 +327,26 @@ update msg model =
         Update new ->
             ( new, Cmd.none )
 
-        AddProcess ->
+        AddProcess mod ->
             let
                 cpu_process =
-                    { p_name = "", burst_size = model.process_burst_size_input, priority = model.process_priority_input }
+                    buildCpuProcessFromInputFields mod
             in
+            ( addProcessToSimParameterRecord cpu_process mod, Cmd.none )
+
+        CalculateOutput ->
+            ( model
+            , buildHttpRequest model
+            )
+
+        DataReceived (Ok str) ->
+            let
+                output =
+                    decodeJsonIntoSimOutputRecord str
+            in
+            ( { model | sim_output_record = output }, Cmd.none )
+
+        DataReceived (Err _) ->
             ( model, Cmd.none )
 
 
@@ -274,6 +394,132 @@ generateRandomIntBetween0And127 =
 generateRandomIntBetweenXAndY : Int -> Int -> Random.Generator Int
 generateRandomIntBetweenXAndY x y =
     Random.int x y
+
+
+buildCpuProcessFromInputFields : Model -> CpuProcess
+buildCpuProcessFromInputFields model =
+    let
+        process_number =
+            List.length model.sim_parameter_record.processes + 1
+
+        name =
+            "P" ++ String.fromInt process_number
+
+        burst =
+            stringToInt model.process_burst_size_input
+
+        pri =
+            stringToInt model.process_priority_input
+    in
+    { p_name = name, burst_size = burst, priority = pri }
+
+
+stringToInt : String -> Int
+stringToInt str =
+    Maybe.withDefault 1 (String.toInt str)
+
+
+randomizeInputFieldValues : Model -> Model
+randomizeInputFieldValues model =
+    model
+
+
+encodeSimParameterRecordIntoJson : Model -> Encode.Value
+encodeSimParameterRecordIntoJson model =
+    let
+        algorithm =
+            model.sim_parameter_record.algorithm
+
+        quantum =
+            model.sim_parameter_record.quantum
+
+        processes =
+            model.sim_parameter_record.processes
+    in
+    object
+        [ ( "algorithm", Encode.string algorithm )
+        , ( "quantum", Encode.int quantum )
+        , encodeListOfProcessesIntoJson processes
+        ]
+
+
+encodeProcessRecordIntoJson : CpuProcess -> Encode.Value
+encodeProcessRecordIntoJson process =
+    object
+        [ ( "p_name", Encode.string process.p_name )
+        , ( "burst_size", Encode.int process.burst_size )
+        , ( "priority", Encode.int process.priority )
+        ]
+
+
+encodeListOfProcessesIntoJson : List CpuProcess -> ( String, Encode.Value )
+encodeListOfProcessesIntoJson process_list =
+    let
+        list_of_values =
+            List.map encodeProcessRecordIntoJson process_list
+
+        list_of_encoded_strings =
+            List.map (encode 0) list_of_values
+    in
+    ( "processes", Encode.list Encode.string list_of_encoded_strings )
+
+
+buildHttpRequest : Model -> Cmd Msg
+buildHttpRequest model =
+    Http.post
+        { url = "http://127.0.0.1:8085/calculate"
+        , body = Http.jsonBody (encodeSimParameterRecordIntoJson model)
+        , expect = Http.expectJson DataReceived Decode.string
+        }
+
+
+decodeJsonIntoSimOutputRecord : String -> SimOutput
+decodeJsonIntoSimOutputRecord str =
+    case Decode.decodeString simOutputDecoder str of
+        Ok record ->
+            record
+
+        Err error ->
+            { process_times = [{p_name = "PX", wait_time = 0, turnaround_time = 1}]
+            , gantt_data = [{p_name = "PX", start_time = 0, stop_time = 1}]
+            , average_wait_time = 3.2
+            , average_turnaround_time = 3.2
+            }
+
+
+simOutputDecoder : Decoder SimOutput
+simOutputDecoder =
+    Decode.succeed SimOutput
+        |> required "process_times" processTimesDecoder
+        |> required "gantt_data" ganttDataDecoder
+        |> required "average_wait_time" Decode.float
+        |> required "average_turnaround_time" Decode.float
+
+
+ganttDataDecoder : Decoder (List GanttDatum)
+ganttDataDecoder =
+    Decode.list ganttDatumDecoder
+
+
+ganttDatumDecoder : Decoder GanttDatum
+ganttDatumDecoder =
+    Decode.succeed GanttDatum
+        |> required "p_name" Decode.string
+        |> required "start_time" Decode.int
+        |> required "stop_time" Decode.int
+
+
+processTimesDecoder : Decoder (List ProcessTimeDatum)
+processTimesDecoder =
+    Decode.list processTimeDatumDecoder
+
+
+processTimeDatumDecoder : Decoder ProcessTimeDatum
+processTimeDatumDecoder =
+    Decode.succeed ProcessTimeDatum
+        |> required "p_name" Decode.string
+        |> required "wait_time" Decode.int
+        |> required "turnaround_time" Decode.int
 
 
 

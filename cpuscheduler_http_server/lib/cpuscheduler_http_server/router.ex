@@ -5,8 +5,14 @@ defmodule CpuschedulerHttpServer.Router do
 
   plug(Plug.Logger, log: :debug)
 
-  plug(:match)
+  plug(Corsica,
+    origins: "http://localhost:8000",
+    allow_credentials: true,
+    allow_headers: ["Content-Type"],
+    log: [rejected: :error, invalid: :warn, accepted: :debug]
+  )
 
+  plug(:match)
   plug(:dispatch)
 
   post "/calculate" do
