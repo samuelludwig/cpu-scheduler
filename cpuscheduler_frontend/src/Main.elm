@@ -12,6 +12,7 @@ import Json.Decode as Decode exposing (..)
 import Json.Decode.Pipeline exposing (optional, optionalAt, required, requiredAt)
 import Json.Encode as Encode exposing (..)
 import Random
+import Task
 
 
 
@@ -104,13 +105,31 @@ view model =
     Element.layout [ Background.color color_palette.background_1 ] <|
         column [ height fill, width fill ]
             [ headerRow
+            , addProcessRow model
+            , clearProcessesButton model
             , algorithmSelector model
             , quantumRow model
-            , outputTablesRow model
             , averageTimesRow model
             , ganttChart model
-            , addProcessRow model
+            , outputTablesRow model
             ]
+
+
+clearProcessesButton : Model -> Element Msg
+clearProcessesButton ({ sim_parameter_record } as model) =
+    Input.button
+        [ Font.color color_palette.text_1
+        , Font.size size_palette.normal
+        , Border.color color_palette.border_1
+        , padding size_palette.xsmall
+        ]
+        { label = text "CLEAR PROCESSES"
+        , onPress = Just (Update
+                              { model
+                                  | sim_parameter_record = { sim_parameter_record | processes = [] }
+                              }
+                         )
+        }
 
 quantumPrompt : Model -> Element Msg
 quantumPrompt model =
@@ -118,39 +137,48 @@ quantumPrompt model =
         []
         (text "Quantum")
 
+
 quantumEntry : Model -> Element Msg
-quantumEntry ({sim_parameter_record} as model) =
+quantumEntry ({ sim_parameter_record } as model) =
     Input.text
         []
         { placeholder = Just (Input.placeholder [] (text "6"))
         , label = Input.labelHidden "quantum"
         , text = String.fromInt model.sim_parameter_record.quantum
         , onChange =
-              \new ->
-                  Update { model
-                         | sim_parameter_record = {sim_parameter_record | quantum = (Maybe.withDefault 0 (String.toInt new))}
-                         }
+            \new ->
+                Update
+                    { model
+                        | sim_parameter_record = { sim_parameter_record | quantum = Maybe.withDefault 0 (String.toInt new) }
+                    }
         }
+
 
 quantumRow : Model -> Element Msg
 quantumRow model =
     row
-        []
+        [
+        padding size_palette.xsmall
+        ]
         [ quantumPrompt model
         , quantumEntry model
         ]
 
+
 ganttChart : Model -> Element Msg
 ganttChart model =
     el
-        []
+        [ spacing size_palette.xsmall
+        , padding size_palette.xsmall
+        , Font.size size_palette.small
+        ]
         (text (ganttDataToString model))
 
 
 averageTimesRow : Model -> Element Msg
 averageTimesRow model =
     row
-        []
+        [padding size_palette.xsmall]
         [ averageTurnaroundTimeLabel model
         , averageTurnaroundTimeDisplay model
         , averageWaitTimeLabel model
@@ -163,7 +191,7 @@ header =
     el
         [ centerX
         , Font.color color_palette.text_1
-        , Font.size size_palette.large
+        , Font.size size_palette.normal
         ]
         (text "CPU Scheduler")
 
@@ -187,6 +215,7 @@ addProcessRow model =
         , Background.color color_palette.background_1
         , padding size_palette.normal
         , spacing size_palette.normal
+        , alignTop
         ]
         [ addProcessButton model
         , processBurstSizePrompt
@@ -261,7 +290,7 @@ calculateButton model =
 processTable : Model -> Element Msg
 processTable model =
     Element.table
-        []
+        [alignLeft]
         { data = model.sim_parameter_record.processes
         , columns =
             [ { header = Element.text "Process Name"
@@ -289,7 +318,7 @@ processTable model =
 processTimesTable : Model -> Element Msg
 processTimesTable model =
     Element.table
-        []
+        [alignRight]
         { data = model.sim_output_record.process_times
         , columns =
             [ { header = Element.text "Process Name"
@@ -317,7 +346,7 @@ processTimesTable model =
 outputTablesRow : Model -> Element Msg
 outputTablesRow model =
     row
-        []
+        [padding size_palette.xsmall, width fill]
         [ processTable model
         , processTimesTable model
         ]
@@ -358,12 +387,12 @@ averageWaitTimeDisplay model =
 algorithmSelector : Model -> Element Msg
 algorithmSelector ({ sim_parameter_record } as model) =
     Input.radio
-        [ padding 10
-        , spacing 20
+        [ padding size_palette.small
+        , spacing size_palette.small
         ]
         { onChange = \new -> Update { model | sim_parameter_record = { sim_parameter_record | algorithm = new } }
         , selected = Just model.sim_parameter_record.algorithm
-        , label = Input.labelAbove [] (text "Algorithm")
+        , label = Input.labelAbove [padding size_palette.xsmall] (text "Algorithm")
         , options =
             [ Input.option "first_come_first_serve" (text "FCFS")
             , Input.option "shortest_job_first" (text "SJF")
@@ -431,6 +460,10 @@ type Msg
     | AddProcess Model
     | CalculateOutput
     | DataReceived (Result Http.Error SimOutput)
+    | GenerateRandomPriority
+    | GenerateRandomBurstSize
+    | RandomizePriority Int
+    | RandomizeBurstSize Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -444,7 +477,12 @@ update msg model =
                 cpu_process =
                     buildCpuProcessFromInputFields mod
             in
-            ( addProcessToSimParameterRecord cpu_process mod, Cmd.none )
+            ( addProcessToSimParameterRecord cpu_process mod
+            , Cmd.batch
+                [ Task.perform (\_ -> GenerateRandomPriority) (Task.succeed True)
+                , Task.perform (\_ -> GenerateRandomBurstSize) (Task.succeed True)
+                ]
+            )
 
         CalculateOutput ->
             ( model
@@ -456,6 +494,22 @@ update msg model =
 
         DataReceived (Err _) ->
             ( model, Cmd.none )
+
+        GenerateRandomPriority ->
+            ( model
+            , Random.generate RandomizePriority (Random.int 0 127)
+            )
+
+        GenerateRandomBurstSize ->
+            ( model
+            , Random.generate RandomizeBurstSize (Random.int 1 32)
+            )
+
+        RandomizePriority int ->
+            ( { model | process_priority_input = String.fromInt int }, Cmd.none )
+
+        RandomizeBurstSize int ->
+            ( { model | process_burst_size_input = String.fromInt int }, Cmd.none )
 
 
 addProcessToSimParameterRecord : CpuProcess -> Model -> Model
@@ -478,16 +532,6 @@ removeProcessFromSimParameterRecord num ({ sim_parameter_record } as model) =
 buildCpuProcess : String -> Int -> Int -> CpuProcess
 buildCpuProcess name burst pri =
     { p_name = name, burst_size = burst, priority = pri }
-
-
-generateRandomIntBetween0And127 : Random.Generator Int
-generateRandomIntBetween0And127 =
-    Random.int 0 127
-
-
-generateRandomIntBetweenXAndY : Int -> Int -> Random.Generator Int
-generateRandomIntBetweenXAndY x y =
-    Random.int x y
 
 
 buildCpuProcessFromInputFields : Model -> CpuProcess
@@ -543,6 +587,8 @@ buildHttpRequest model =
         , body = Http.jsonBody (encodeSimParameterRecordIntoJson model)
         , expect = Http.expectJson DataReceived simOutputDecoder
         }
+
+
 
 -- SUBSCRIPTIONS
 
