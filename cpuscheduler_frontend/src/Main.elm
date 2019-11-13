@@ -161,6 +161,7 @@ quantumRow : Model -> Element Msg
 quantumRow model =
     row
         [ padding size_palette.xsmall
+        , spacing size_palette.xsmall
         ]
         [ quantumPrompt model
         , quantumEntry model
@@ -180,7 +181,9 @@ ganttChart model =
 averageTimesRow : Model -> Element Msg
 averageTimesRow model =
     row
-        [ padding size_palette.xsmall ]
+        [ padding size_palette.xsmall
+        , spacing size_palette.xsmall
+        ]
         [ averageTurnaroundTimeLabel model
         , averageTurnaroundTimeDisplay model
         , averageWaitTimeLabel model
