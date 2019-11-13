@@ -124,12 +124,15 @@ clearProcessesButton ({ sim_parameter_record } as model) =
         , padding size_palette.xsmall
         ]
         { label = text "CLEAR PROCESSES"
-        , onPress = Just (Update
-                              { model
-                                  | sim_parameter_record = { sim_parameter_record | processes = [] }
-                              }
-                         )
+        , onPress =
+            Just
+                (Update
+                    { model
+                        | sim_parameter_record = { sim_parameter_record | processes = [] }
+                    }
+                )
         }
+
 
 quantumPrompt : Model -> Element Msg
 quantumPrompt model =
@@ -157,8 +160,7 @@ quantumEntry ({ sim_parameter_record } as model) =
 quantumRow : Model -> Element Msg
 quantumRow model =
     row
-        [
-        padding size_palette.xsmall
+        [ padding size_palette.xsmall
         ]
         [ quantumPrompt model
         , quantumEntry model
@@ -178,7 +180,7 @@ ganttChart model =
 averageTimesRow : Model -> Element Msg
 averageTimesRow model =
     row
-        [padding size_palette.xsmall]
+        [ padding size_palette.xsmall ]
         [ averageTurnaroundTimeLabel model
         , averageTurnaroundTimeDisplay model
         , averageWaitTimeLabel model
@@ -290,7 +292,7 @@ calculateButton model =
 processTable : Model -> Element Msg
 processTable model =
     Element.table
-        [alignLeft]
+        [ alignLeft ]
         { data = model.sim_parameter_record.processes
         , columns =
             [ { header = Element.text "Process Name"
@@ -318,7 +320,7 @@ processTable model =
 processTimesTable : Model -> Element Msg
 processTimesTable model =
     Element.table
-        [alignRight]
+        [ alignRight ]
         { data = model.sim_output_record.process_times
         , columns =
             [ { header = Element.text "Process Name"
@@ -346,7 +348,7 @@ processTimesTable model =
 outputTablesRow : Model -> Element Msg
 outputTablesRow model =
     row
-        [padding size_palette.xsmall, width fill]
+        [ padding size_palette.xsmall, width fill ]
         [ processTable model
         , processTimesTable model
         ]
@@ -392,7 +394,7 @@ algorithmSelector ({ sim_parameter_record } as model) =
         ]
         { onChange = \new -> Update { model | sim_parameter_record = { sim_parameter_record | algorithm = new } }
         , selected = Just model.sim_parameter_record.algorithm
-        , label = Input.labelAbove [padding size_palette.xsmall] (text "Algorithm")
+        , label = Input.labelAbove [ padding size_palette.xsmall ] (text "Algorithm")
         , options =
             [ Input.option "first_come_first_serve" (text "FCFS")
             , Input.option "shortest_job_first" (text "SJF")
