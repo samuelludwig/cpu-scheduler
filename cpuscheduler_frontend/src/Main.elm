@@ -70,7 +70,6 @@ type alias SimOutput =
 type alias Model =
     { sim_parameter_record : SimParameters
     , sim_output_record : SimOutput
-    , seed : Random.Seed
     , process_burst_size_input : String
     , process_priority_input : String
     }
@@ -89,7 +88,6 @@ initial_model _ =
             , average_wait_time = 0
             , average_turnaround_time = 0
             }
-      , seed = Random.initialSeed 31415
       , process_burst_size_input = "8"
       , process_priority_input = "4"
       }
@@ -460,20 +458,6 @@ update msg model =
             ( model, Cmd.none )
 
 
-setSeed : Random.Seed -> Model -> Model
-setSeed new_seed model =
-    { model | seed = new_seed }
-
-
-setNewSeed : Model -> Model
-setNewSeed model =
-    let
-        new_seed =
-            Tuple.second (Random.step (Random.int 0 0) model.seed)
-    in
-    setSeed new_seed model
-
-
 addProcessToSimParameterRecord : CpuProcess -> Model -> Model
 addProcessToSimParameterRecord cpu_process ({ sim_parameter_record } as model) =
     { model
@@ -559,18 +543,6 @@ buildHttpRequest model =
         , body = Http.jsonBody (encodeSimParameterRecordIntoJson model)
         , expect = Http.expectJson DataReceived simOutputDecoder
         }
-
-
-randomNumberBetween0And127 : Model -> Int
-randomNumberBetween0And127 model =
-    Random.step generateRandomIntBetween0And127 model.seed |> Tuple.first
-
-
-randomNumberBetweenXAndY : Int -> Int -> Model -> Int
-randomNumberBetweenXAndY x y model =
-    Random.step (generateRandomIntBetweenXAndY x y) model.seed |> Tuple.first
-
-
 
 -- SUBSCRIPTIONS
 
