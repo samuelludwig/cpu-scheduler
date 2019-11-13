@@ -18,7 +18,7 @@
 where
 
 ```javascript
-algorithm_name = "fcfs" | "sjf" | "priority" | "round_robin"
+algorithm_name = "first_come_first_serve" | "shortest_job_first" | "priority" | "round_robin"
 quantum = positive_integer | null
 ```
 

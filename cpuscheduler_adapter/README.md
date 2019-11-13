@@ -1,21 +1,3 @@
 # CpuschedulerAdapter
 
-**TODO: Add description**
-
-## Installation
-
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `cpuscheduler_adapter` to your list of dependencies in `mix.exs`:
-
-```elixir
-def deps do
-  [
-    {:cpuscheduler_adapter, "~> 0.1.0"}
-  ]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/cpuscheduler_adapter](https://hexdocs.pm/cpuscheduler_adapter).
-
+- This component is responsible for receiving formatted JSON data and turning it into a `%SimParameters{}` struct, which it then passes to the core `cpuscheduler` module for calculation. Upon receiving the returned `%SimOutput{}` struct, it converts *that* back into JSON, which it then returns.

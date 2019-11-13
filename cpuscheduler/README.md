@@ -1,4 +1,4 @@
-# CpuScheduler
+# Cpuscheduler
 
 - This component is responsible for taking in a `%SimParameters{}` struct and using it to calculate and return a `%SimOutput{}` struct.
 - The `%SimParameters{}` struct will contain all the information necessary to calculate/create the appropriate output, including name of the algorithm being used, a list of processes to be scheduled + their associated data (name/burst size/priority), and the quantum (if necessary).
