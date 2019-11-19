@@ -1,11 +1,9 @@
 defmodule Sjf do
-  import Util
-
   def generate_process_times_list(process_queue) do
     sorted_queue = order_process_list_by_burst_size(process_queue)
 
     Enum.map(sorted_queue, fn %CpuProcess{p_name: p_name} ->
-      build_process_time_datum_struct_from_queue(sorted_queue, p_name)
+      Util.build_process_time_datum_struct_from_queue(sorted_queue, p_name)
     end)
   end
 
@@ -13,7 +11,7 @@ defmodule Sjf do
     sorted_queue = order_process_list_by_burst_size(process_queue)
 
     Enum.map(sorted_queue, fn %CpuProcess{p_name: p_name} ->
-      build_gantt_datum_struct_from_queue(sorted_queue, p_name)
+      Util.build_gantt_datum_struct_from_queue(sorted_queue, p_name)
     end)
   end
 

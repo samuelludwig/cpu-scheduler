@@ -1,6 +1,4 @@
 defmodule CpuScheduler do
-  import Util
-
   @moduledoc """
   Public API for CpuScheduler
 
@@ -133,10 +131,10 @@ defmodule CpuScheduler do
   end
 
   defp calculate_average_wait_and_turnaround_time_based_on_process_times(process_times) do
-    average_wait_time = get_average_wait_time(process_times) |> Float.round(@precision)
+    average_wait_time = Util.get_average_wait_time(process_times) |> Float.round(@precision)
 
     average_turnaround_time =
-      get_average_turnaround_time(process_times) |> Float.round(@precision)
+      Util.get_average_turnaround_time(process_times) |> Float.round(@precision)
 
     {average_wait_time, average_turnaround_time}
   end

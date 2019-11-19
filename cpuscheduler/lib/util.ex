@@ -1,4 +1,20 @@
 defmodule Util do
+  def build_process_time_datum_struct_from_queue(process_queue, p_name) do
+    %ProcessTimeDatum{
+      p_name: p_name,
+      wait_time: get_wait_time_of_process_in_queue(process_queue, p_name),
+      turnaround_time: get_turnaround_time_of_process_in_queue(process_queue, p_name)
+    }
+  end
+
+  def build_gantt_datum_struct_from_queue(process_queue, p_name) do
+    %GanttDatum{
+      p_name: p_name,
+      start_time: get_wait_time_of_process_in_queue(process_queue, p_name),
+      stop_time: get_turnaround_time_of_process_in_queue(process_queue, p_name)
+    }
+  end
+
   def get_average_wait_time(process_times) do
     get_sum_of_all_wait_times(process_times) / Enum.count(process_times)
   end
@@ -69,22 +85,6 @@ defmodule Util do
     end
   end
 
-  def build_process_time_datum_struct_from_queue(process_queue, p_name) do
-    %ProcessTimeDatum{
-      p_name: p_name,
-      wait_time: get_wait_time_of_process_in_queue(process_queue, p_name),
-      turnaround_time: get_turnaround_time_of_process_in_queue(process_queue, p_name)
-    }
-  end
-
-  def build_gantt_datum_struct_from_queue(process_queue, p_name) do
-    %GanttDatum{
-      p_name: p_name,
-      start_time: get_wait_time_of_process_in_queue(process_queue, p_name),
-      stop_time: get_turnaround_time_of_process_in_queue(process_queue, p_name)
-    }
-  end
-
   def add_burst_size_and_wait_time_of_process_in_queue(process_queue, process_name) do
     get_burst_size_of_process_in_queue(process_queue, process_name) +
       get_wait_time_of_process_in_queue(process_queue, process_name)
@@ -93,11 +93,5 @@ defmodule Util do
   def add_process_burst_sizes_up_to_queue_position(process_queue, position) do
     Enum.take(process_queue, position)
     |> Enum.reduce(0, fn %CpuProcess{burst_size: burst_size}, acc -> acc + burst_size end)
-  end
-
-  def get_total_runtime_of_all_processes_in_queue(process_queue) do
-    Enum.reduce(process_queue, 0, fn %CpuProcess{burst_size: burst_size}, acc ->
-      acc + burst_size
-    end)
   end
 end

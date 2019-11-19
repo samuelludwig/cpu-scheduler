@@ -19,6 +19,8 @@ The tech stack employed will be as follows:
 - `cpuscheduler_http_server`: Starts up a server on `localhost:8085` with one available path- `/calculate`. The server waits for an HTTP POST request with a JSON body, which it then passes to the `cpuscheduler_adapter` component, it sends the JSON it gets back from the adapter as an HTTP response.
 - `cpuscheduler_frontend`: Web client written in the Elm programming language, acts as the user interface for the simulator, will make POST requests to the HTTP server and receive the response.
 
+![Diagram of CPU Scheduler components](./color_cpu_scheduler.png "CPU Scheduler Components")
+
 ## Raison D'être
 
 - Elixir is a language that I am pretty confident with by now, but have done 

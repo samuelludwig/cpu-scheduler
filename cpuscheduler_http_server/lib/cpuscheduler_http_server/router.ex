@@ -5,6 +5,7 @@ defmodule CpuschedulerHttpServer.Router do
 
   plug(Plug.Logger, log: :debug)
 
+  # Prevents Cross-Origin-Resource-Sharing error
   plug(Corsica,
     origins: "http://localhost:8000",
     allow_credentials: true,
